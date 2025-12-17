@@ -1,11 +1,11 @@
-//基于Gemini开发的sealdice插件//
+**基于Gemini开发的sealdice插件**
 
 灵感来源：智谱大模型 AI Plugin、SillyTravel、SpectreCore (影芯)
 （本质上是被智谱模型的呆傻气晕的产物）
 （使用了Google ai studio、ChatGPT辅助编码）
 
 
-#目前此插件实现的功能有：#
+**目前此插件实现的功能有：**
 
 1.接入ai模型，自定义prompt进行角色扮演
 2.多提示词不同概率回复或@bot回复
