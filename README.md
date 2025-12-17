@@ -1,4 +1,4 @@
-##基于Gemini开发的sealdice插件##
+#基于Gemini开发的sealdice插件#
 ---
 灵感来源：智谱大模型 AI Plugin、SillyTravel、SpectreCore (影芯)
 （本质上是被智谱模型的呆傻气晕的产物）
