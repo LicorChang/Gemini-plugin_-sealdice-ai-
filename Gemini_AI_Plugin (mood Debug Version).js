@@ -171,16 +171,22 @@
 
   /* ================= 好感度管理 (Safe Storage) ================= */
   // 尝试使用持久化存储，若失败则回退到内存
-  let favorabilityStore = {}; 
-  try {
-      if (!ext.storage) ext.storage = {};
-      // 检查读写权限
-      ext.storage._test = 1; 
-      favorabilityStore = ext.storage;
-  } catch (e) {
-      console.error("[Gemini] Storage init failed, fallback to memory:", e);
+  let favorabilityStore = {};
+
+  // 安全检测 storage 是否可用
+  if (ext.storage && typeof ext.storage === "object") {
+      try {
+          // 尝试只读访问，不写测试字段
+          favorabilityStore = ext.storage;
+      } catch (e) {
+          console.warn("[Gemini] Storage unavailable, using memory store.");
+          favorabilityStore = {};
+      }
+  } else {
+      console.warn("[Gemini] No persistent storage provided by host, using memory store.");
       favorabilityStore = {};
   }
+
 
   // 获取带时间衰减的好感度
   function getFavorability(userId) {
