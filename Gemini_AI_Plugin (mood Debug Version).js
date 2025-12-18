@@ -13,6 +13,7 @@
   }
 
   const ext = seal.ext.new(EXT_NAME, 'cz', '1.9.18-behavior-update');
+  const NO_REPLY = "__NO_REPLY__";
   ext.enabled = true;
   seal.ext.register(ext);
 
@@ -612,7 +613,7 @@
       ];
 
       const nowRequest = Date.now();
-      if (nowRequest - this.lastRequestTime < 1500) return null;
+      if (nowRequest - this.lastRequestTime < 1500) return NO_REPLY;
       this.lastRequestTime = nowRequest;
 
       const proxy = stripTrailingSlash(cfgStr("API代理地址"));
@@ -641,7 +642,7 @@
 
           const data = await res.json();
           let reply = data?.choices?.[0]?.message?.content;
-          if (!reply) return null;
+          if (!reply) return NO_REPLY;
 
           let evalScore = 1; 
           let severity = 1; // Default
@@ -691,7 +692,7 @@
               this.commitStress(evalScore, burstCount, userId);
               adjustFavorability(userId, this.internalState.stress, evalScore, stats.badStreak, severity);
 
-              return null;
+              return NO_REPLY;
           }
 
           this.dialogContext.push({ role: "assistant", content: reply });
@@ -728,7 +729,7 @@ Burst: ${burstCount} | BadStreak: ${stats.badStreak}
           return reply;
       } catch (e) {
           console.error("[Gemini Plugin Error]", e);
-          return null;
+          return NO_REPLY;
       }
     }
   }
@@ -754,7 +755,12 @@ Burst: ${burstCount} | BadStreak: ${stats.badStreak}
   async function handleAIReply(ctx, msg, text) {
     const ai = getAI(ctx);
     const reply = await ai.generate(text, ctx, msg);
-    if (!reply) return;
+
+    // 明确处理“沉默标记”
+    if (!reply || reply === NO_REPLY) {
+        return;
+    }
+
 
     const ENABLE = cfgBool("启用引用回复和@用户");
     const qq = msg?.sender?.userId?.split(":")[1] ?? "";
@@ -767,7 +773,12 @@ Burst: ${burstCount} | BadStreak: ${stats.badStreak}
       out = `[CQ:at,qq=${qq}] ${reply}`;
     }
 
+    if (!out || typeof out !== "string" || out.trim() === "") {
+        return;
+    }
+
     seal.replyToSender(ctx, msg, out);
+
   }
 
   /* ================= 指令 ================= */
