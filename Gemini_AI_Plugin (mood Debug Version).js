@@ -7,7 +7,7 @@
 // ==/UserScript==
 
 (function () {
-  const EXT_NAME = 'Gemini AI Plugin（活人感增强）';
+  const EXT_NAME = 'GeminiAI';
   if (seal.ext.find(EXT_NAME)) {
     seal.ext.unregister(seal.ext.find(EXT_NAME));
   }
@@ -123,6 +123,28 @@
     return !!(msg?.replyId || msg?.quoteId || msg?.source?.id);
   }
 
+  function isReplyToMe(ctx, msg) {
+    if (!isReplyMessage(msg)) return false;
+
+    const targetId = getReplyTargetId(msg);
+    if (!targetId) return false;
+
+    // seal.self?.id 在多数版本可用，兜底 endPoint
+    const selfId = String(seal.self?.id ?? ctx.endPoint?.userId ?? "").replace(/\D/g, "");
+    if (!selfId) return false;
+
+    // msg.source / elements 里通常会带原消息发送者
+    if (Array.isArray(msg?.elements)) {
+      const replyElem = msg.elements.find(e => e.type === "reply" || e.type === "Reply");
+      if (replyElem?.senderId) {
+        return String(replyElem.senderId).replace(/\D/g, "") === selfId;
+      }
+    }
+
+    // 保守兜底：无法确认来源时，不当成硬触发
+    return false;
+  }
+
   function getReplyTargetId(msg) {
     const m = String(msg?.message ?? "").match(/\[CQ:reply,id=(\d+)\]/);
     if (m && m[1]) return String(m[1]);
@@ -130,7 +152,8 @@
       const r = msg.elements.find(e => e && (e.type === "reply" || e.type === "Reply"));
       if (r) return String(r.id ?? r.messageId);
     }
-    return msg?.replyId || msg?.rawId || "";
+    return msg?.replyId || "";
+
   }
 
   function buildSpecialUsers() {
@@ -851,7 +874,7 @@ Burst: ${burstCount} | BadStreak: ${stats.badStreak}
 
     const ai = getAI(ctx);
     const hitAt = isAtMe(ctx, msg);
-    const hitReply = isReplyMessage(msg);
+    const hitReply = isReplyToMe(ctx, msg);
     
     // 解析多关键词配置
     const keywords = parseKeywords();
